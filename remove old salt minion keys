@@ -1,0 +1,23 @@
+#! /bin/bash
+
+echo "clean the not return salt "
+
+salt  '*'  test.ping > all_hosts
+
+cat all_hosts | grep return -B 1 | grep -v 'return' | cut -d':' -f1 > salt_error_hosts
+
+echo "start clean the error hosts"
+for i in $( cat salt_error_hosts);
+do
+    # for delete the authed key 
+    salt-key -d $i -y;
+    # for delete the unauthed key , sometime it is a must 
+    salt-key -d $i -y;
+    # delete the pem  file
+    if [ -f /etc/salt/pki/master/minions/%i ]
+    then
+        rm -f /etc/salt/pki/master/minions/$i
+    fi
+done
+
+echo "done"
