@@ -1,0 +1,39 @@
+#!/bin/bash
+# activemq - Startup script for activemq
+# /etc/init.d/activemq
+#This is startup script for activemq
+# chkconfig: 35 69 68
+# Description: This is a startup script for activemq
+#Source function library
+. /etc/init.d/functions
+
+
+case "$1" in
+        start)
+              echo "Starting activemq.."
+              cd /tmp/apache-activemq-5.14.5/bin
+              sh activemq start
+#              if [ $? -eq 0 ]
+#              then
+#              echo "Please access url through http://serverip:8161"
+#              fi
+              ;;
+        stop)
+              echo "stopping activemq.."
+              cd /tmp/apache-activemq-5.14.5/bin
+              sh activemq stop
+              ;;
+        restart)
+              echo "restart activemq.."
+              cd /tmp/apache-activemq-5.14.5/bin
+              sh activemq restart
+              ;;
+        status)
+              echo "checking status activemq.."
+              cd /tmp/apache-activemq-5.14.5/bin
+              sh activemq status
+              ;;
+        *)
+              echo "Usage: $0 {start|stop|restart}"
+              exit 1
+esac
