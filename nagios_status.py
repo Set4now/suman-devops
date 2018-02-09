@@ -3,6 +3,7 @@ import json
 import ast
 import os
 import argparse
+import sys
 
 
 
@@ -12,15 +13,14 @@ parser.add_argument('-f', '--file', metavar='', help="Flat file containg the lis
 parser.add_argument('-H', '--host', metavar='', help="Single host to scan")
 args=parser.parse_args()
 
-if args.file:
- with open(args.file, 'r') as f:
-  for server in f:
-    try:
-      url="http://{}:4567/_status/{}/_services".format(args.server,server.strip('\n'))
+def get_status(url):
       data=requests.get(url).json()
       for i,j in data.items():
         if j["current_state"] == "3":
-          print "Hostname:- {}".format(server.strip('\n'))
+          if args.file:
+            print "Hostname:- {}".format(server.strip('\n'))
+          else:
+            print "Hostname:- {}".format(args.host)
           print "Service:- {}".format(j["service_description"])
           if j["notifications_enabled"] == "1":
             print "Notifications has been enabled"
@@ -30,5 +30,25 @@ if args.file:
             print "Notification:- {}".format(j["notifications_enabled"])
           print "Checks enabled:- {}".format(j["active_checks_enabled"])
           print j["plugin_output"] + "\n"
+
+
+if args.file and args.host:
+  sys.tracebacklimit=0
+  raise Exception("Cannot use both parameters for target. Either use -H or -f.")
+elif args.file:
+ with open(args.file, 'r') as f:
+  for server in f:
+    try:
+      url="http://{}:4567/_status/{}/_services".format(args.server,server.strip('\n'))
     except Exception as e:
       print  "Unable to fetch data from API"
+    get_status(url)
+elif args.host:
+   try:
+     url="http://{}:4567/_status/{}/_services".format(args.server,args.host)
+   except:
+     print  "Unable to fetch data from API"
+   get_status(url)
+else:
+  sys.tracebacklimit=0
+  raise Exception("Either use -f or -H option to target servers.!!")
