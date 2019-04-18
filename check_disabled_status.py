@@ -1,6 +1,4 @@
-#Ticket:- https://jira.walmart.com/browse/STRTPL-1267
-#Author :- Suman Deb
-#Requester:- Tejpartap Gill
+
 
 import requests
 import json
