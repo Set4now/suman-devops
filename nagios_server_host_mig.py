@@ -3,9 +3,6 @@ import os
 import subprocess
 import json
 
-#dfw_url="http://{0}:4567/_status/{1}/_services".format("dfw-mon1.prod.walmart.com", "cdc-ca-vpr1-r2")
-#dal_url="http://{0}:4567/_status/{1}/_services".format("dal-mon1.prod.walmart.com", "cdc-ca-vpr1-r2")
-
 
 
 #dfw_url_data=requests.get(dfw_url).json()
@@ -15,7 +12,7 @@ with open("hostfile", 'r') as f:
     host_all=f.readlines()
 
 for host in host_all:
-    dfw_url = "http://{0}:4567/_status/{1}/_services".format("dfw-mon1.prod.walmart.com", host.strip("\n"))
+    dfw_url = "http://{0}:4567/_status/{1}/_services".format("", host.strip("\n"))
     dfw_url_data=requests.get(dfw_url).json()
     
     for dfw_service,dfw_status in dfw_url_data.items():
