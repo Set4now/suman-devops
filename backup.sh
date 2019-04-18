@@ -7,7 +7,7 @@ target_dir="/Monitoring/nagios"
 log="log/nagios_backup_log_$DATE.txt"
 key="/home/ngbkp/.ssh/id_rsa.pub"
 remote_user="ngbkp"
-remote_host="dfw-mon1.prod.walmart.com"
+remote_host=""
 hostname=$HOSTNAME
 remote_path="/Monitoring/Nagios_Backup/$hostname"
 
