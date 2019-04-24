@@ -1,0 +1,52 @@
+curl command	Description	Example
+-i or --include	Includes the response headers in the response.	
+curl -i http://www.example.com
+
+-d or --data	Includes data to post to the URL. The data needs to be url encoded. Data can also be passed in the request body.	
+curl -d "data-to-post" http://www.example.com
+
+
+-H or --header	Submits the request header to the resource. 
+Headers are common with REST API requests because the authorization is usually included in the header.	
+curl -H "key:12345" http://www.example.com
+
+-X POST	Specifies the HTTP method to use with the request (in this example, POST). 
+If you use -d in the request, curl automatically specifies a POST method. With GET requests, 
+including the HTTP method is optional, because GET is the default method used.	
+
+curl -X POST -d "resource-to-update" http://www.example.com
+
+@filename	Loads content from a file.	
+curl -X POST -d @mypet.json http://www.example.com
+
+
+curl -i -H "Accept: application/json" -X POST -d "{status:MIA}" http://personsreport.com/status/person123
+
+OR
+
+curl -i \
+     -H "Accept: application/json" \
+     -X POST \
+     -d "{status:MIA}" \
+     http://personsreport.com/status/person123 \
+     
+The Accept header tells the server that the only format we will accept in the response is JSON.
+
+==============
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
