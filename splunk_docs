@@ -1,0 +1,496 @@
+Splunk Notes:-
+
+Installation Manual - Docker and RPM
+docker pull splunk/splunk
+ 
+docker run --name splunk -d -p 8000:8000 -e SPLUNK_START_ARGS=--accept-license -e SPLUNK_PASSWORD=password splunk/splunk:latest
+ 
+wget -O splunk-7.2.0-8c86330ac18-linux-2.6-x86_64.rpm 'https://www.splunk.com/bin/splunk/DownloadActivityServlet?architecture=x86_64&platform=linux&version=7.2.0&product=splunk&filename=splunk-7.2.0-8c86330ac18-linux-2.6-x86_64.rpm&wget=true'
+ 
+
+sumandeb_git
+Set4now!
+
+
+https://www.splunk.com/en_us/download/get-started-with-your-free-trial.html#
+
+Splunk License:-
+Standard enterprise 
+Enterprise trial
+Sales trial 
+Dev/test license
+Free license
+
+License Types:-
+Perpetual:- Indefinite use
+Term:- For specific period
+
+Developer license (10 GB ingestion per day)
+https://splunkbase.splunk.com/develop/ 
+
+
+Importing Data to plunk:-
+Sample Tutorial Logs
+Access.log file ( http/nginx)
+http://www.mediafire.com/file/30cm0hr5gg6aeai/access.log/file
+Linux Secure Log File
+http://www.mediafire.com/file/ztu7lhyd4yaj6cv/secure.log/file
+
+Search on secure log to find the ip and country from which the failed login attempts happened.
+Install Addon ( Linux) from app section
+source="secure.log" action=failure | iplocation src | table src, City, Country
+
+Graphical View:-
+source="secure.log" action=failure | iplocation src | geostats count by Country
+
+SPL
+source=“”
+Eval kb=bytes/1024
+Stats 
+Rename x as y
+Table 
+
+Splunk Search Assistance
+Full
+Compact
+None
+
+Splunk Report
+Query->save as report->schedule->email alert/slack
+
+Addons & Apps
+
+Addons are used to import and enrich data from any source.
+It generally contains field expressions, lookups, saved searches and 	others.
+
+Apps delivers user experience in pre built dashboards that makes data easy to analyse.
+
+splunkbase.splunk.com ( Splunk store)
+
+Dashoboards and panels
+Dashboard contains panels.
+
+Time Range Picker
+1.Dashboard-edit-input-time
+2. Create token by editing time input and link to all the panels
+
+Splunk Architecture:-
+Directory structure
+/opt/splunk/
+Config file preference (top to bottom)
+1. /opt/splunk/etc/system/local
+2. App-local /opt/splunk/etc/apps/A/local
+3. App-default /opt/splunk/etc/apps/A/default
+4. System default directory /opt/splunk/etc/system/default
+
+App directory precedence
+A..Z
+A…a
+Z..a
+
+Index
+Index is repository of data
+Splunk transforms data into events which it stores in index.
+When splunk indexes your data, it create two files.
+1. Raw file in compressed form
+2. Indexes that points to raw data(tsidx files) plus some meta data files.
+These files resides in a directory organised by age.
+
+Location 
+/opt/splunk/var/lib/splunk/defaultdb/db/
+
+
+Default set of Indexes:-
+Main (default index)
+_internal ( stores splints internal logs)
+_audit (user search history, file system change and audit specific)
+
+
+
+ 
+Example:-
+[root@ip-172-31-11-148 db]# pwd
+/opt/splunk/var/lib/splunk/defaultdb/db
+[root@ip-172-31-11-148 db]# ls
+CreationTime  db_1540491656_1539821706_0  GlobalMetaData
+[root@ip-172-31-11-148 db]#
+
+If you create an index then…
+
+[root@ip-172-31-11-148 ~]# cat /opt/splunk/etc/apps/search/local/indexes.conf
+[testindex]
+coldPath = $SPLUNK_DB/testindex/colddb
+enableDataIntegrityControl = 0
+enableTsidxReduction = 0
+homePath = $SPLUNK_DB/testindex/db
+maxTotalDataSizeMB = 4
+thawedPath = $SPLUNK_DB/testindex/thaweddb
+
+Bucket Life cycle
+
+Hot->warm->cold->frozen->thawing
+Data are compressed by splunk (journal.gz)
+All buckets other than hot data are read only and can be backed up.
+
+cold_db—> cold bucket
+Db—> warm and hot both.
+          db_*** (warm bucket)
+When certain conditions occur (for example, the hot bucket reaches a certain size or splunkd gets restarted), the hot bucket becomes a warm bucket ("rolls to warm"), and a new hot bucket is created in its place. Warm buckets are searchable, but are not actively written to. There are many warm buckets.
+
+Once further conditions are met (for example, the index reaches some maximum number of warm buckets), the indexer begins to roll the warm buckets to cold, based on their age. It always selects the oldest warm bucket to roll to cold. Buckets continue to roll to cold as they age in this manner. After a set period of time, cold buckets roll to frozen, at which point they are either archived or deleted. By editing attributes in indexes.conf, you can specify the bucket aging policy, which determines when a bucket moves from one state to the next.
+
+
+Hot bucket to cold bucket
+1. We get too many hot buckets
+2. Hot buckets did not received data since a while
+3. Timespan of buckets is too large.
+4. Buckets meta data files becomes too large
+5. Index clustering repliation error
+6. Splunk restart
+
+Warm to Cold buckets
+
+Historical data should be stored  in cold bucket on cheaper storage.
+
+Buckets are rolled from warm to cold when there are too many warm buckets. (index.conf)
+[index_name]
+coldPath = “”
+maxWarmDBCount = 300 # Max warm bucket  is 300 
+
+Cold to Frozen 
+No data is searchable in frozen bucket
+By default splunk will delete data in frozen bucket.
+Data roles from cold to frozen when:-
+Total size of index(hot+warm+cold) grows too large.
+Oldest event in the bucket exceeds specific age.
+
+Config:- 
+coldToFrozenDir </path> (if you don’t want to delete the data which is splunks default process, so by doing this you can archive frozen data)
+
+In default process,tsdix file is removed and bucket is specified to destination we specify
+
+Thawing process (restore process)
+From frozen DB to splunk
+
+1. mv /frozen_path/db* $SPLUNK_HOME/var/lib/splunk/index_name/thaweddb
+2. Splunk rebuild $SPLUNK_HOME/var/lib/splunk/index_name/thaweddb/db*
+3. Splunk restart
+
+Splunk workflow actions:-
+For example if we want to find out the a  clientIp info from a third part website.
+
+Fields->workflow actions
+
+Splunk Universal Forwarder
+It’s an agent which collects data from server and send it to splunk. Its installed in client nodes.
+
+Port 9997 (receiving data port from UF)
+
+Download spunk forwarder:-
+
+wget -O splunkforwarder-7.3.0-657388c7a488-linux-2.6-x86_64.rpm 'https://www.splunk.com/bin/splunk/DownloadActivityServlet?architecture=x86_64&platform=linux&version=7.3.0&product=universalforwarder&filename=splunkforwarder-7.3.0-657388c7a488-linux-2.6-x86_64.rpm&wget=true'
+
+/opt/splunkforwarder/
+
+Yum install -y splunk-forwarder*
+Accept license and put admin and password
+Admin
+Set4now!
+
+./splunk start; status
+./splunk list monitor (will list what all by default splunk is monitoring)
+./splunk add monitor /var/log (add a new directory to monitor)
+
+./splunk add forward-server 172.31.11.148:9997 ( tell splunk to where to send data for example the splunk indexer server)
+
+nc -zv 172.31.11.148 9997 (check connectivity from client to splunk server)
+
+#tail -f /opt/splunkforwarder/var/log/splunk/slunkd.log
+
+/opt/splunkforwarder/etc/system/
+Input.conf,
+output.conf,
+Server.conf
+
+Forwarder Management
+Its stays infront of splunk and act as filter to say which logs from which servers goes to splunk based on certain user defined rules.
+
+
+Overview of Deployment Server
+
+Deployment Server—>ServerClass—>Deployment Clients
+Deployment server is a tool for distributing configs, apps and content updates to group of 
+Splunk enterprise instances like UF,search heads etc.
+
+Forwarder Management is a GUI on top of Deployment server that
+Provides an easy way to configure the deployment server and monitor
+The status of deployment updates.
+
+
+Server classes
+Group of servers sharing some configs
+
+Deployment App
+A set of config files maintained by deployment server and pushed to
+Clients belonging to specific server class.
+
+Example:
+App which has inputs.conf that monitors specific files .
+The app is associated with some serverclass.
+
+Server Class is a group which can contain multiple deployment apps.
+Rules are set inside the server class not on deployment app.
+
+Deployment apps are linked with server class where rules are set.
+
+Steps:-
+On splunk or Deployment server
+Cp sample_app to /opt/splunk/etc/deployment_apps/
+Restart splunk then you will see the forwarder mgmt page up and running.
+Create a server class and attach the sample app to it.
+
+
+On UF
+
+Now instead of connecting directly to splunk, we connect to deployment server on UF.
+/op/splunkforwarder/bin/splunk start
+./splunk set deploy-poll  172.31.11.148:8089  ( Deployment server ip and port)
+#tail -f /opt/splunkforwarder/var/log/splunl/splunkd.log
+
+Now finals check the forwarder managment GUI you will see that client.
+
+Custom add-on for Universal forwarder (UF)
+Inputs.conf ( which log file to monitor, index)
+Outputs.conf 
+
+1. Create Your Own app with inputs.conf & outputs.conf  in deployement server.
+
+/opt/splunk/etc/deployment-apps/suman_app/local
+cat inputs.conf
+[monitor:///var/log]
+disabled = false
+
+cat outputs.conf
+[tcpout]
+defaultGroup = default-autolb-group
+
+[tcpout:default-autolb-group]
+server = 172.31.11.148:9997
+
+[tcpout-server://172.31.11.148:9997]
+   
+2. Go to forwarder Manager GUI and edit the app for restart splunk post deployment.
+3. Attach the app to the server class
+4. On next polling from UF to Forwarder management the app will be deployed
+5. Verify by logging to the UF client and check  opt/splunkforwarder/etc/apps/suman_app/local
+
+6. /opt/splunkforwarder/bin/splunk list monitor will show the files which are there in inputs.conf inside the custom app that you just deployed above.
+
+Pushing a add-on to UF
+1. Down an add-on for eg Splunk Add-on for Unix and Linux
+2. Copy it to Deployment server (/opt/splunk/etc/deployment-apps/)
+3. Check it in apps section in forwarder management GUI
+4. Add it to server class
+5. It will be automatically deployed to UF clients on next poll.
+6. Veify it inside UF (/opt/splunkforwarder/etc/apps)
+
+
+Source Types
+Field extractions and regex are defined at source types level.
+Props.conf | transforms.conf
+If source types of logs files is incorrect then it will not get parsed properly.
+Splunk comes with built in source types with associated regex for for common log files like apache nginx etc.
+
+IFX (Interactive Field extractor)
+Without regex
+
+Props.conf & transforms.conf
+Custom source types and its associated config settings are stored in props| transforms.conf
+
+props.conf:-
+It contains the regex name and other config settings for the specific source types.
+[source-type-name]
+…
+REPORT-access=<regex-name>
+BREAK_ONLY_BEFORE=<regex> (where to break lines as individual events)
+#cat transforms.conf
+[regex-name]
+regex=“”
+
+Splunk default source types gets stored inside
+/opt/splunk/etc/system/default/props|transforms.conf
+
+But custom source types get stored
+/opt/splunk/etc/system/local/props.conf | transforms.conf
+
+Event type
+Save a query as event type. To understand the number of this type of events that occurred.
+Limitations:-
+Cannot include pipe after a simple search
+Includes a sub-search
+
+Tags
+Tags enable you to assign names to specific fields and value combinations, including event type, host, source etc.
+Attach a tag to an event type and then search for that tag will give all the attached events.
+
+Colored Events
+Events with colour for visualisation
+
+Lookups
+Lookup splunk data with external sources like csv,database etc
+
+Sourcetype=“” | lookup <lookupfilename.csv> <fieldname in csv> as <fieldname in splunk event>
+
+Splunk Alerts
+
+Access Control
+User
+Groups
+Roles
+
+Distributed Splunk Architecture
+1. Search Heads
+2. Indexers
+3. UF
+4. License Master— Slaves
+
+License
+A files stating the amount of data that can be ingested per day into index.
+
+License Stack
+A collection of licenses whose individual licensing volume amounts aggregate to serve as a single unified amount of indexing volume. When you aggregate license volumes into a single amount, you are "stacking the licenses." 
+
+License Pool	
+A quantity of licensing volume allocated from a stack. The license master manages pools and assigns license slaves to each pool, so that the slaves have access to licensing volume.
+
+Indexer
+A splunk instance which takes data ,convert them to events and finally stores them into indexes.
+
+Data—>parsing queue—>parsing pipeline(parsing stage)—>indexqueue—>indexpipeline(indexing stage)
+
+Parsing pipeline
+1. Extracting default fields for each event including host, source types and source.
+2. Character set encoding
+3. Identifying line termination using line break rules.
+4. Mask sensitive data
+
+Indexing Pipeline
+1. Breaking events into segments
+2. Building index data structures
+3. Writing raw data and index files to disk.
+
+Masking of sensitive data (indexer component)
+
+
+SearchHead
+Handle search Management functions , directing requests to search peers and then merging the results back to the users.
+
+
+Index Clustering:-
+
+Master Node coordinates the activities of peer nodes.
+Master nodes tells the peer nodes to adhere the configs that are being sent by master node.
+
+Configure Master indexer
+On Master indexer node
+splunk edit cluster-config -mode master -replication_factor 4 -search_factor 3 -secret set4now! -cluster_label cluster1 -auth admin:set4now!
+
+Peer nodes are the nodes in which the actual data resides and replication happens here.
+Search requests are sent to peer nodes
+
+Configure Peer nodes as slave:-
+
+On each Peer/Slave nodes
+splunk edit cluster-config -mode slave -master_uri https://172.31.20.216:8089 -replication_port 9887 -secret set4now!
+
+
+All configurations needs to be pushed from master index server as configuration bundle to the peer nodes.
+
+(Create a index on all the peer nodes)
+/opt/splunk/etc/master-apps/_cluster/local/indexes.conf on master
+And in Gui push the configuration from master GUI
+
+Push custom add-on to all the peer indexer nodes.
+1. Install add on from master indexer
+2. #cp -r /opt/splunk/etc/apps/<downloaded add on>  /opt/splunk/etc/master-apps/
+3. Master indexer GUI->indexer clustering—>push configuration—>push
+4. Go to peer nodes and verify the apps section in GUI
+
+Forwarder Logs to Indexer Cluster
+There are two ways to connect
+1. Indexer Discovery feature
+2. Connect forwarder directly to peer nodes.
+
+Connect forwarder directly to peer nodes.
+1. Install Splunk forwarder
+2. ./splunk add forward-server 172.31.11.148:9997 (peer node 1)
+3.  ./splunk add forward-server 172.31.11.149:9997 (peer node 2)
+4. ./splunk restart
+5. Verify the outputs.conf (/opt/splunk/etc/system/local/outputs.conf)
+6. Verify data and start searching in GUI
+
+Indexer Discovery Method
+UF sends data to Master to retrieve the list of indexer peer nodes and also does the Load Balancing for sending data in btw them.
+
+Master Indexer:
+/opt/splunk/etc/system/local/server.conf [indexer_discovery]
+pass4SymmKey =
+ 
+Forwarders:
+ /opt/splunkforwarder/etc/system/local/outputs.conf
+[indexer_discovery:master]
+pass4SymmKey =
+master_uri = https://<master inderxer IP>:8089
+ 
+[tcpout:group1]
+indexerDiscovery = master
+
+Search Head Clustering
+First need to deploy the deployer server.
+/opt/splunk/etc/system/local/server.conf
+[shclustering]
+pass4SymmKey = password
+shcluster_label = sh_cluster
+
+Restart Splunk
+
+Setup Search Head clustering
+
+Search Head Clustering Setup - Document
+Deployer:
+ 
+server.conf
+[shclustering]
+pass4SymmKey = YurPwd
+shcluster_label = YurName
+ 
+All search heads:
+ 
+SH01:
+ 
+./splunk init shcluster-config -mgmt_uri https://<SH01 ip>:8089 -replication_port 8080 -replication_factor 1 -shcluster_label sh_cluster -conf_deploy_fetch_url https://<deployer ip>-secret password
+ 
+SH02:
+ 
+./splunk init shcluster-config -mgmt_uri https://<SH02 ip>:8089 -replication_port 8080 -replication_factor 1 -shcluster_label sh_cluster -conf_deploy_fetch_url https://<deployer ip>-secret password
+ 
+Search Head Cluster Captain
+./splunk bootstrap shcluster-captain -servers_list "https://<sh01>:8089","https://<sh02>:8089"
+ 
+SH01: 172.17.0.5
+SH02: 172.17.0.6
+Deplyoer: 172.17.0.7
+ 
+
+
+Pushing Artifacts through Deployer
+1. Download the app in deployer from Gui
+2. #cp -r /opt/splunk/etc/apps/addon /opt/splunk/etc/sh_cluster/apps/
+3. Splunk apply shcluster-bundle -target https://<sh01>:8089
+
+
+Connect SH cluster nodes to master indexer
+splunk edit cluster-config -mode searchhead -master_uri  <master indexer ip>:8089 -secret password
+
+
+Serach head—>index master<— UF
