@@ -16,7 +16,7 @@ while true; do
   RESOURCE_VERSION=$(curl -s "${BASE_URL}/events" --cacert "${CA_CERT}" -H "Authorization: Bearer ${TOKEN}" | jq -r '.metadata.resourceVersion')
   DATE=$(date --utc +"%Y-%m-%dT%TZ")
   #echo "{\"time\":\"${DATE}\",\"object\":{\"message\":\"Monitoring Kubernetes events staring from ${RESOURCE_VERSION} resourceVersion\"}}" >&2
-  curl -s "${BASE_URL}/watch/events?resourceVersion=${RESOURCE_VERSION}" --cacert "${CA_CERT}" -H "Authorization: Bearer ${TOKEN}" &
+  curl -s --stderr - --cacert "${CA_CERT}" -H "Authorization: Bearer ${TOKEN}" "${BASE_URL}/watch/events?resourceVersion=${RESOURCE_VERSION}"  &
   PID=$!
   wait $PID
 done
