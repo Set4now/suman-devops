@@ -23,5 +23,5 @@ def run(command):
           logging.info(output.rstrip())
 
 if __name__ == "__main__":
-    for path in run(command):
+    for path in run("echo suman"):
       print path

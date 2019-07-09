@@ -15,8 +15,8 @@ RUN apt-get update && \
 ENV KUBERNETES_API_SERVER_HOST="kubernetes.svc.local"
 ENV KUBERNETES_API_SERVER_PORT="443"
 
-ADD get_events.sh  /usr/local/bin/
+ADD main.py  /usr/local/bin/
 RUN chmod +x /usr/local/bin/
 
-CMD ["/bin/sh", "/usr/local/bin/get_events.sh"]
+CMD ["python", "/usr/local/bin/main.py"]
 
