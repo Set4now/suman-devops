@@ -16,7 +16,7 @@ args='curl --cacert /var/run/secrets/kubernetes.io/serviceaccount/ca.crt -H "Aut
 #print args
 
 
-process=subprocess.Popen(args, shell=True, stdout=subprocess.PIPE, bufsize=0)
+process=subprocess.Popen(args, shell=True, stdout=subprocess.PIPE, bufsize=1)
 out=select.poll()
 out.register(process.stdout)
 
