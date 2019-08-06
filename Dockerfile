@@ -15,7 +15,7 @@ RUN apt-get update && \
 ENV KUBERNETES_API_SERVER_HOST="kubernetes.svc.local"
 ENV KUBERNETES_API_SERVER_PORT="443"
 
-ADD main.py  /usr/local/bin/
+ADD request.py  /usr/local/bin/
 RUN chmod +x /usr/local/bin/
 
 CMD ["python", "/usr/local/bin/request.py"]
