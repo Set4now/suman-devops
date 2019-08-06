@@ -9,6 +9,7 @@ import json
 import logging
 import json
 import sys
+import ast
 
 '''
   Logging structuer that Docker pasrser understands.
@@ -36,7 +37,8 @@ while True:
          logging.error('Permission denied for Pod Service Account to access KUBE API!')
          sys.exit(1)
       if line is not None:
-         logging.info(line)
+         raw_data=ast.literal_eval(json.dumps(line))
+         print json.dumps(json.loads(raw_data.strip("\n")))
       if line is None:
          logging.error('Looks like No response from API. Trying again')
       if line == "":
