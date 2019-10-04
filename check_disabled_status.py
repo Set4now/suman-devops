@@ -18,7 +18,6 @@ parser.add_argument('-H', '--host', metavar='', help="Single host to scan")
 args=parser.parse_args()
 
 #url="http://{}:4567/_status/{}/_services".format(args.server,args.host)
-#url="http://{}:4567/_status/{}/_services".format('dfw-mon1.prod.walmart.com', 'dal-sc-vpr2-r1')
 """ 
 This script with fetch you nodes with disabed notifications or services.
 Note:- This is using Nagios API.
